@@ -187,3 +187,9 @@ To compare the version of my_board.sch in `master` to the version as of tag `rev
 ```
 $ git schematic-diff master rev1 my_board.sch
 ```
+
+### Using the API Server
+
+- POST: /upload - upload a zipped kicad project. Returns a project hash.
+- GET: /process/<hash> - builds the fabrication outputs based on the uploaded project. Returns paths to fabrication outputs and if the process was successful. 
+- GET: /projects/uploads/* - static file serving. You can download the artifacts here.
