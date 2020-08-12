@@ -12,7 +12,7 @@
 
 FROM ubuntu:bionic
 MAINTAINER Jesse Vincent <jesse@keyboard.io>
-LABEL Description="Minimal KiCad image based on Ubuntu"
+LABEL Description="kicad-tools with rest api"
 
 
 ADD upstream/kicad-automation-scripts/kicad-ppa.pgp .
@@ -32,10 +32,6 @@ RUN apt-get -y update && \
     apt-get install -y python python-pip xvfb recordmydesktop xdotool xclip && \
     pip install -r requirements.txt && \
     rm requirements.txt
-
-RUN apt-get -y remove python3-pip && \
-    rm -rf /var/lib/apt/lists/*
-
 
 # Use a UTF-8 compatible LANG because KiCad 5 uses UTF-8 in the PCBNew title
 # This causes a "failure in conversion from UTF8_STRING to ANSI_X3.4-1968" when
@@ -81,6 +77,7 @@ COPY etc/kiplot /opt/etc/kiplot
 
 COPY upstream/InteractiveHtmlBom /opt/InteractiveHtmlBom
 COPY scripts/make-interactive-bom /opt/InteractiveHtmlBom/
+COPY scripts/make-interactive-bom-outputdir /opt/InteractiveHtmlBom/
 
 # Install image diffing
 RUN apt-get -y update && \
@@ -99,3 +96,9 @@ COPY bin-on-docker/pcb-diff.sh /opt/diff-boards/
 COPY bin-on-docker/schematic-diff.sh /opt/diff-boards/
 
 COPY bin-on-docker/fill_zones.py /usr/local/bin/
+
+
+# Install REST API
+WORKDIR /usr/src/api
+COPY ./api/. /usr/src/api
+RUN pip install -r requirements.txt
