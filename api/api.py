@@ -9,7 +9,7 @@ import subprocess
 import shutil
 
 BUILD_FOLDER = 'build'
-UPLOAD_FOLDER = '/projects/uploads'
+UPLOAD_FOLDER = '/data/uploads'
 PLOTS_FOLDER = BUILD_FOLDER+'/kicad-tools-plot'
 BOM_FOLDER = BUILD_FOLDER+'/kicad-tools-bom'
 IBOM_FOLDER = BUILD_FOLDER+'/kicad-tools-ibom'
@@ -21,6 +21,7 @@ ALLOWED_EXTENSIONS = {'zip'}
 
 app = Flask(__name__, static_url_path=UPLOAD_FOLDER, static_folder=UPLOAD_FOLDER)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+app.config['SECRET_KEY'] = 'zJRZUnB&Pcn4namp^S%Eki4'
 
 #helpers
 def run_cmd(cmd):
@@ -190,6 +191,7 @@ def process(upload_hash):
 @app.route('/ibom/<upload_hash>')
 def serve_ibom(upload_hash):
     return render_template(os.path.join('/project/uploads', upload_hash, IBOM_FOLDER, "ibom.html"))
+
 
 @app.route('/upload', methods=['GET', 'POST'])
 def upload_file():

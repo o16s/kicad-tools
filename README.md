@@ -193,3 +193,12 @@ $ git schematic-diff master rev1 my_board.sch
 - POST: /upload - upload a zipped kicad project. Returns a project hash.
 - GET: /process/<hash> - builds the fabrication outputs based on the uploaded project. Returns paths to fabrication outputs and if the process was successful. 
 - GET: /projects/uploads/* - static file serving. You can download the artifacts here.
+
+#### Developing
+1. git submodule init && git submodule update --recursive --remote
+2. python -m venv api && pip install -r requirements.txt
+3. docker-compose up --build
+
+or
+
+`docker run -p 5000:5000 --env FLASK_ENV=development --env FLASK_APP=api.py o16s/kicad-tools:0.1 flask run --host 0.0.0.0`
