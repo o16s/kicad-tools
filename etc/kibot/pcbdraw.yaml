@@ -8,18 +8,21 @@ preflight:
   run_drc: false
   ignore_unconnected: true
 
-global:
-  output: 'draw.%x'
-
 outputs:
   - name: 'pcbdraw bottom'
     comment: 'PCB draw bottom side'
     type: pcbdraw
-    dir: layout/pcbdraw
     options:
       bottom: true
+      format: 'svg'
+      output: 'bottom.svg'
+      show_components: 'all'
+
     
   - name: 'pcbdraw top'
     comment: 'PCB draw top side'
     type: pcbdraw
-    dir: layout/pcbdraw
+    options:
+      format: 'svg'
+      output: 'top.svg'
+      show_components: 'all'

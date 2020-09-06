@@ -196,6 +196,24 @@ def generate_plots(upload_path):
 
     return result, os.path.join(output_dir, layout_zip_filename+".zip"), os.path.join(output_dir, layout_zip_filename+"/gerber.zip")
 
+
+def generate_pcbdraw(upload_path):
+
+    app.logger.info("generating pcbdraw")
+
+    board = search_filetype(".kicad_pcb", upload_path)
+    input_dir = board[0]
+    output_dir = upload_path+"/"+PLOTS_FOLDER
+
+    cmd = "kibot -b "+input_dir+" -c /opt/etc/kibot/pcbdraw.yaml -d "+output_dir
+    app.logger.info(cmd)
+    result = run_cmd(cmd)
+
+    app.logger.info("generated pcbdraw")
+
+    return result, os.path.join(output_dir, "top.svg"), os.path.join(output_dir, "bottom.svg")
+
+
 #routes
 @app.route('/')
 def version():
@@ -220,7 +238,12 @@ def process(upload_hash):
                 #generate plots (gerbers, pdfs, dxfs, svgs)
                 try:
                     layout_res, layout, gerber = generate_plots(upload_path)
-                    app.logger.info(layout)
+                    app.logger.info(layout)   
+
+                    pcbdraw_res, pcbdraw_top, pcbdraw_bottom = generate_pcbdraw(upload_path)
+                    app.logger.info(pcbdraw_top)
+                    app.logger.info(pcbdraw_bottom)
+
 
                     ibom_res, ibom = generate_ibom(upload_path)
                     app.logger.info(ibom)
@@ -241,6 +264,7 @@ def process(upload_hash):
                     return {"output":{
                         "layout_result":str(layout_res),
                         "step_result":str(step_res),
+                        "pcbdraw_result":str(pcbdraw_res),
                         "dxf_result":str(dxf_res),
                         "ibom_result":str(ibom_res),
                         "bom_result":str(bom_res),
@@ -252,6 +276,10 @@ def process(upload_hash):
                         "dxf_path":str(dxf),
                         "schematic_pdf_path":str(schematic_pdf),
                         "schematic_svg_path":str(schematic_svg),
+                        "pcbdraw_path":{
+                            "top":str(pcbdraw_top),
+                            "bottom":str(pcbdraw_bottom)
+                        },
                         "layout_path": {
                             "all": str(layout),
                             "gerber": str(gerber)
