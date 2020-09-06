@@ -10,95 +10,51 @@
 # This docker configuration was originally based on https://github.com/productize/docker-kicad as of 301bf181b72c811e9644b83a895ec4a16f2fa1a0
 
 
-FROM ubuntu:bionic
-MAINTAINER Jesse Vincent <jesse@keyboard.io>
-LABEL Description="kicad-tools with rest api"
-
-
-ADD upstream/kicad-automation-scripts/kicad-ppa.pgp .
-RUN echo 'debconf debconf/frontend select Noninteractive' | debconf-set-selections && \
-        apt-get -y update && \
-        apt-get -y install gnupg2 && \
-        echo 'deb http://ppa.launchpad.net/js-reynaud/kicad-5.1/ubuntu bionic main' >> /etc/apt/sources.list && \
-        apt-key add kicad-ppa.pgp && \
-        apt-get -y update && apt-get -y install --no-install-recommends kicad kicad-footprints kicad-symbols kicad-packages3d && \
-        apt-get -y purge gnupg2 && \
-        apt-get -y autoremove && \
-        rm -rf /var/lib/apt/lists/* && \
-        rm kicad-ppa.pgp
-
-COPY upstream/kicad-automation-scripts/eeschema/requirements.txt .
-RUN apt-get -y update && \
-    apt-get install -y python python-pip xvfb recordmydesktop xdotool xclip && \
-    pip install -r requirements.txt && \
-    rm requirements.txt
+FROM ubuntu:focal
+LABEL Description="kicad-tools with rest api (using kibot)"
 
 # Use a UTF-8 compatible LANG because KiCad 5 uses UTF-8 in the PCBNew title
 # This causes a "failure in conversion from UTF8_STRING to ANSI_X3.4-1968" when
 # attempting to look for the window name with xdotool.
 ENV LANG C.UTF-8
+ENV DEBIAN_FRONTEND=noninteractive
 
-COPY upstream/kicad-automation-scripts /usr/lib/python2.7/dist-packages/kicad-automation
+# Install Kibot
 
-# Copy default configuration and fp_lib_table to prevent first run dialog
-COPY upstream/kicad-automation-scripts/config/* /root/.config/kicad/
+# Kicad's libraries are tied to python3
+RUN apt-get -y update && \
+    apt-get install -y python3-pip python3-xvfbwrapper python3-psutil fluxbox wmctrl \
+    x11vnc ssvnc xvfb recordmydesktop xdotool xclip wget aptitude apt-utils imagemagick software-properties-common
+
+#install latest kicad (cannot use the stock ubuntu kicad package as kibom/bom/sch will fail)
+RUN add-apt-repository --yes ppa:kicad/kicad-5.1-releases && \
+    apt -y update && \
+    apt install -y --install-recommends kicad
+
+#install INTI-CMNB kicad-automation-scripts as a dependency to kibot
+RUN wget https://github.com/INTI-CMNB/kicad-automation-scripts/releases/download/v1.4.1/kicad-automation-scripts.inti-cmnb_1.4.1-1_all.deb \
+&& apt install ./kicad-automation-scripts.inti-cmnb_*_all.deb 
+
+#install INTI-CMNB Interactive BOM
+RUN wget https://github.com/INTI-CMNB/InteractiveHtmlBom/releases/download/v2.3.3/interactivehtmlbom.inti-cmnb_2.3.3-1_all.deb \
+&& apt install ./interactivehtmlbom.inti-cmnb_*_all.deb
+
+#copy kibot yaml
+COPY ./etc/kibot/. /opt/etc/kibot
+
+#install kibot (supports positions files and png rendering)
+RUN pip3 install --no-compile kibot
+RUN pip3 install --no-compile pcbdraw
+
 
 # Copy the installed global symbol and footprint so projects built with stock
 # symbols and footprints don't break
-RUN cp /usr/share/kicad/template/sym-lib-table /root/.config/kicad/
-RUN cp /usr/share/kicad/template/fp-lib-table /root/.config/kicad/
+#RUN cp /usr/share/kicad/template/sym-lib-table /root/.config/kicad/
+#RUN cp /usr/share/kicad/template/fp-lib-table /root/.config/kicad/
 
-
-
-# Install KiPlot
-
-# Kicad's libraries are tied to python3, so we need to install kiplot with
-# python 3
-RUN apt-get -y update && \
-    apt-get install -y python3-pip
-
-COPY upstream/kiplot /opt/kiplot
-
-RUN cd /opt/kiplot && pip3 install -e . 
-
-COPY etc/kiplot /opt/etc/kiplot
-
-
-# Install KiCost
-#
-# Disabled because KiCost depends on Octopart which no longer has a free API
-#RUN pip3 install 'kicost==1.0.4'
-#
-#RUN apt-get -y remove python3-pip && \
-#    rm -rf /var/lib/apt/lists/*
-#
-
-# Install the interactive BOM
-
-COPY upstream/InteractiveHtmlBom /opt/InteractiveHtmlBom
-COPY scripts/make-interactive-bom /opt/InteractiveHtmlBom/
-COPY scripts/make-interactive-bom-outputdir /opt/InteractiveHtmlBom/
-
-# Install image diffing
-RUN apt-get -y update && \
-    apt-get install -y imagemagick && \
-    rm -rf /var/lib/apt/lists/* && \
-    sed -i '/disable ghostscript format types/d' /etc/ImageMagick-6/policy.xml && \
-    sed -i '/\"PS\"/d' /etc/ImageMagick-6/policy.xml && \
-    sed -i '/\"EPS\"/d' /etc/ImageMagick-6/policy.xml && \
-    sed -i '/\"PDF\"/d' /etc/ImageMagick-6/policy.xml && \
-    sed -i '/\"XPS\"/d' /etc/ImageMagick-6/policy.xml
-
-COPY bin-on-docker/git-diff-boards.sh /opt/diff-boards/
-#COPY bin/git-imgdiff /opt/diff-boards/
-COPY bin-on-docker/plot_board.py /opt/diff-boards/
-COPY bin-on-docker/pcb-diff.sh /opt/diff-boards/
-COPY bin-on-docker/schematic-diff.sh /opt/diff-boards/
-
-COPY bin-on-docker/fill_zones.py /usr/local/bin/
 
 
 # Install REST API
 WORKDIR /usr/src/api
 COPY ./api/. /usr/src/api
-RUN pip install -r requirements.txt
+RUN pip3 install -r requirements.txt

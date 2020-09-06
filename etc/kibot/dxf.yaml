@@ -1,0 +1,22 @@
+# Example KiPlot config file
+kibot:
+  version: 1
+
+preflight:
+  run_erc: false
+  update_xml: false
+  run_drc: false
+  ignore_unconnected: true
+
+global:
+  output: 'PCB.Edge.Cuts.%x'
+
+outputs:
+  - name: DXF
+    comment: "DXF files"
+    type: dxf
+    layers: 
+      - 'Edge.Cuts'
+    options:
+      metric_units: true
+      sketch_plot: true

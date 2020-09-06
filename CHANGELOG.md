@@ -1,0 +1,1 @@
+- v0.3 - replacing kiplot with kibot, upgrading ubuntu to 20.04, removing obras kicad-automation-scripts

@@ -1,0 +1,19 @@
+# Example KiPlot config file
+kibot:
+  version: 1
+
+preflight:
+  run_erc: false
+  update_xml: false
+  run_drc: false
+  ignore_unconnected: true
+
+global:
+  output: 'pcb.%x'
+
+outputs:
+
+  - name: 'step'
+    comment: "3d model export"
+    type: step
+    

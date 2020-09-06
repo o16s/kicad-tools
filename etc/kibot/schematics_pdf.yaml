@@ -1,0 +1,19 @@
+# Example KiPlot config file
+kibot:
+  version: 1
+
+preflight:
+  run_erc: false
+  update_xml: false
+  run_drc: false
+  ignore_unconnected: true
+
+global:
+  output: 'schematics.%x'
+
+outputs:
+
+  - name: 'pdf_sch_print'
+    comment: "Schematics pdf"
+    type: pdf_sch_print
+    

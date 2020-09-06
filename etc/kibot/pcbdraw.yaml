@@ -1,0 +1,25 @@
+# Example KiPlot config file
+kibot:
+  version: 1
+
+preflight:
+  run_erc: false
+  update_xml: false
+  run_drc: false
+  ignore_unconnected: true
+
+global:
+  output: 'draw.%x'
+
+outputs:
+  - name: 'pcbdraw bottom'
+    comment: 'PCB draw bottom side'
+    type: pcbdraw
+    dir: layout/pcbdraw
+    options:
+      bottom: true
+    
+  - name: 'pcbdraw top'
+    comment: 'PCB draw top side'
+    type: pcbdraw
+    dir: layout/pcbdraw

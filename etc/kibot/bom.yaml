@@ -1,0 +1,16 @@
+# Example KiPlot config file
+kibot:
+  version: 1
+
+preflight:
+  run_erc: false
+  update_xml: true
+  run_drc: false
+  ignore_unconnected: true
+
+global:
+  output: 'bom.%x'
+
+outputs:
+  - name: bom
+    type: bom

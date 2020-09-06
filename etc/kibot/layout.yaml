@@ -1,0 +1,119 @@
+# Example KiPlot config file
+kibot:
+  version: 1
+
+preflight:
+  run_erc: false
+  update_xml: false
+  run_drc: false
+  ignore_unconnected: true
+
+outputs:
+  - name: 'gerbers'
+    comment: "Gerbers for the board house"
+    type: gerber
+    dir: layout/gerber
+    options:
+      # generic layer options
+      exclude_edge_layer: false
+      exclude_pads_from_silkscreen: false
+      use_aux_axis_as_origin: false
+      plot_sheet_reference: false
+      plot_footprint_refs: true
+      plot_footprint_values: true
+      force_plot_invisible_refs_vals: false
+      tent_vias: true
+
+      # gerber options
+      line_width: 0.15
+      subtract_mask_from_silk: true
+      use_protel_extensions: true
+      gerber_precision: 4.5
+      create_gerber_job_file: true
+      use_gerber_x2_attributes: true
+      use_gerber_net_attributes: false
+
+    layers: 'all'
+
+  - name: gerber_drill
+    type: gerb_drill
+    dir: layout/gerber
+
+  - name: execellon_drill
+    type: excellon
+    dir: layout/gerber
+    options:
+      pth_and_npth_single_file: false
+
+  - name: DXF
+    comment: "DXF files"
+    type: dxf
+    dir: layout/dxf
+    options:
+      exclude_edge_layer: false
+      exclude_pads_from_silkscreen: false
+      use_aux_axis_as_origin: false
+      plot_sheet_reference: false
+      plot_footprint_refs: true
+      plot_footprint_values: true
+      force_plot_invisible_refs_vals: false
+      tent_vias: true
+
+      # PS options
+      drill_marks: full
+      sketch_plot: true
+      polygon_mode: true
+      metric_units: true
+      
+    layers: 'all'
+
+
+  - name: SVG
+    comment: "SVG files"
+    type: svg
+    dir: layout/svg
+    options:
+      exclude_edge_layer: false
+      exclude_pads_from_silkscreen: false
+      plot_sheet_reference: false
+      plot_footprint_refs: true
+      plot_footprint_values: true
+      force_plot_invisible_refs_vals: false
+      tent_vias: true
+
+      # SVG options
+      line_width: 0.25
+      drill_marks: full
+      mirror_plot: true
+      negative_plot: true
+    layers: 'all'
+
+
+
+  - name: PDF
+    comment: "PDF files"
+    type: pdf
+    dir: layout/pdf
+    options:
+      exclude_edge_layer: false
+      exclude_pads_from_silkscreen: false
+      plot_sheet_reference: false
+      plot_footprint_refs: true
+      plot_footprint_values: true
+      force_plot_invisible_refs_vals: false
+      tent_vias: true
+
+      # PDF options
+      drill_marks: small
+      mirror_plot: false
+      negative_plot: false
+      line_width: 0.01
+    layers: 'all'
+
+
+  - name: 'pdf_pcb_print'
+    comment: "Layout pdf"
+    type: pdf_pcb_print
+    layers: 'all'
+    dir: layout
+    

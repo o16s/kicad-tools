@@ -7,6 +7,7 @@ from werkzeug.utils import secure_filename
 import uuid
 import subprocess
 import shutil
+import logging
 
 BUILD_FOLDER = 'build'
 UPLOAD_FOLDER = '/data/uploads'
@@ -14,7 +15,7 @@ PLOTS_FOLDER = BUILD_FOLDER+'/kicad-tools-plot'
 BOM_FOLDER = BUILD_FOLDER+'/kicad-tools-bom'
 IBOM_FOLDER = BUILD_FOLDER+'/kicad-tools-ibom'
 SCHEMATIC_FOLDER = BUILD_FOLDER+'/kicad-tools-schematic'
-
+STEP_FOLDER = BUILD_FOLDER+'/kicad-tools-step'
 
 ALLOWED_EXTENSIONS = {'zip'}
 
@@ -65,79 +66,146 @@ def make_output_dirs(upload_path):
         os.makedirs(os.path.join(upload_path,BOM_FOLDER))
         os.makedirs(os.path.join(upload_path,IBOM_FOLDER))
         os.makedirs(os.path.join(upload_path,SCHEMATIC_FOLDER))
+        os.makedirs(os.path.join(upload_path,STEP_FOLDER))
         return True
     except Exception as e:
         return False
 
 def generate_schematic_pdf(upload_path):
+    app.logger.info("generating pdf schematic")
+
     schematic = search_filetype(".sch", upload_path)
-    input_file = schematic[0]
+    input_dir = schematic[0]
     output_dir = os.path.join(upload_path, SCHEMATIC_FOLDER)
-
-    cmd = "python -m kicad-automation.eeschema.schematic --schematic "+input_file+"  --output_dir "+output_dir+" --screencast_dir "+output_dir+" export --all_pages  -f pdf"
-
-    kicad_name = extract_kicad_name(input_file)
+   
+    cmd = "kibot -e "+input_dir+" -c /opt/etc/kibot/schematics_pdf.yaml -d "+output_dir
+    app.logger.info(cmd)
+    
     result = run_cmd(cmd)
-    return result, os.path.join(output_dir, kicad_name+".pdf")
+    app.logger.info("generated pdf schematic")
+
+    return result, os.path.join(output_dir, "schematics.pdf")
+
 
 def generate_schematic_svg(upload_path):
+    app.logger.info("generating svg schematic")
+
     schematic = search_filetype(".sch", upload_path)
-    input_file = schematic[0]
+    input_dir = schematic[0]
     output_dir = os.path.join(upload_path, SCHEMATIC_FOLDER)
-    kicad_name = extract_kicad_name(input_file)
-
-    cmd = "python -m kicad-automation.eeschema.schematic --schematic "+input_file+"  --output_dir "+output_dir+" --screencast_dir "+output_dir+" export --all_pages  -f svg"
-
+   
+    cmd = "kibot -e "+input_dir+" -c /opt/etc/kibot/schematics_svg.yaml -d "+output_dir
+    app.logger.info(cmd)
+    
     result = run_cmd(cmd)
-    return result, os.path.join(output_dir, kicad_name+".svg")
+
+    app.logger.info("generated svg schematic")
+
+    return result, os.path.join(output_dir, "schematics.svg")
+
 
 
 def generate_bom(upload_path):
+    app.logger.info("generating bom")
+
     schematic = search_filetype(".sch", upload_path)
     input_dir = schematic[0]
     output_dir = os.path.join(upload_path, BOM_FOLDER)
-
-    cmd = "python -m kicad-automation.eeschema.export_bom --schematic "+input_dir+"  --output_dir "+output_dir+" --screencast_dir "+output_dir+" export"
-    #return cmd
+   
+    cmd = "kibot -b "+input_dir+" -c /opt/etc/kibot/bom.yaml -d "+output_dir
+    app.logger.info(cmd)
+    
     result = run_cmd(cmd)
+    app.logger.info("generated bom")
 
     return result, os.path.join(output_dir, "bom.csv")
 
 
+
+def generate_step(upload_path):
+    app.logger.info("generating step")
+    board = search_filetype(".kicad_pcb", upload_path)
+    input_dir = board[0]
+    output_dir = os.path.join(upload_path, STEP_FOLDER)
+    
+    cmd = "kibot -b "+input_dir+" -c /opt/etc/kibot/step.yaml -d "+output_dir
+    
+    result = run_cmd(cmd)
+
+    app.logger.info(cmd)
+    app.logger.info("generated step")
+
+    return result, os.path.join(output_dir, "pcb.step")
+
+
+
 def generate_ibom(upload_path):
+    app.logger.info("generating ibom")
     board = search_filetype(".kicad_pcb", upload_path)
     input_dir = board[0]
     output_dir = os.path.join(upload_path, IBOM_FOLDER)
-    cmd = "sh /opt/InteractiveHtmlBom/make-interactive-bom-outputdir "+input_dir+" "+output_dir
-
+    
+    cmd = "kibot -b "+input_dir+" -c /opt/etc/kibot/ibom.yaml -d "+output_dir
+    
     result = run_cmd(cmd)
+
+    app.logger.info(cmd)
+    app.logger.info("generated ibom")
 
     return result, os.path.join(output_dir, "ibom.html")
 
+def generate_dxf_edge_cuts(upload_path):
+
+    app.logger.info("generating dxf edge cuts")
+
+    dxf_filename = "PCB.Edge.Cuts"
+    board = search_filetype(".kicad_pcb", upload_path)
+    input_dir = board[0]
+    output_dir = upload_path+"/"+PLOTS_FOLDER
+
+    cmd = "kibot -b "+input_dir+" -c /opt/etc/kibot/dxf.yaml -d "+output_dir
+
+    app.logger.info(cmd)
+
+    result = run_cmd(cmd)
+
+    app.logger.info("generated dxf edge cuts")
+
+    return result, os.path.join(output_dir, dxf_filename+".dxf")
+
 
 def generate_plots(upload_path):
+
+    app.logger.info("generating plots")
 
     layout_zip_filename = "layout"
     board = search_filetype(".kicad_pcb", upload_path)
     input_dir = board[0]
     output_dir = upload_path+"/"+PLOTS_FOLDER
 
-    cmd = "kiplot -b "+input_dir+" -c /opt/etc/kiplot/generic_plot.kiplot.yaml -v -d "+output_dir
-    
+    cmd = "kibot -b "+input_dir+" -c /opt/etc/kibot/layout.yaml -d "+output_dir
+
+    app.logger.info(cmd)
+
     result = run_cmd(cmd)
 
     shutil.make_archive(output_dir+"/"+layout_zip_filename, 'zip', output_dir+"/layout")
     shutil.make_archive(output_dir+"/"+layout_zip_filename+"/gerber", 'zip', output_dir+"/layout/gerber")
+
+    app.logger.info("generated plots")
 
     return result, os.path.join(output_dir, layout_zip_filename+".zip"), os.path.join(output_dir, layout_zip_filename+"/gerber.zip")
 
 #routes
 @app.route('/')
 def version():
-    return {"api_version": 0.1}
+    app.logger.info("api_version")
+    return {"api_version": 0.3}
 
 @app.route('/process/<upload_hash>', methods=['GET'])
 def process(upload_hash):
+
+    app.logger.info("processing upload")
     upload_path = app.config['UPLOAD_FOLDER']+"/"+upload_hash
     
     if not os.path.exists(upload_path):
@@ -152,10 +220,19 @@ def process(upload_hash):
                 #generate plots (gerbers, pdfs, dxfs, svgs)
                 try:
                     layout_res, layout, gerber = generate_plots(upload_path)
+                    app.logger.info(layout)
 
                     ibom_res, ibom = generate_ibom(upload_path)
+                    app.logger.info(ibom)
 
                     bom_res, bom = generate_bom(upload_path)
+                    app.logger.info(bom)
+
+                    step_res, step = generate_step(upload_path)
+                    app.logger.info(step)
+
+                    dxf_res, dxf = generate_dxf_edge_cuts(upload_path)
+                    app.logger.info(dxf)
 
                     schematic_pdf_res, schematic_pdf = generate_schematic_pdf(upload_path)
 
@@ -163,12 +240,16 @@ def process(upload_hash):
 
                     return {"output":{
                         "layout_result":str(layout_res),
+                        "step_result":str(step_res),
+                        "dxf_result":str(dxf_res),
                         "ibom_result":str(ibom_res),
                         "bom_result":str(bom_res),
                         "schematic_pdf_result":str(schematic_pdf_res),
                         "schematic_svg_result":str(schematic_svg_res),
                         "ibom_path":str(ibom),
+                        "step_path":str(step),
                         "bom_path":str(bom),
+                        "dxf_path":str(dxf),
                         "schematic_pdf_path":str(schematic_pdf),
                         "schematic_svg_path":str(schematic_svg),
                         "layout_path": {

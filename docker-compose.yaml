@@ -7,8 +7,10 @@ services:
     environment: 
       - FLASK_APP=api.py
       - FLASK_ENV=development 
+      - FLASK_DEBUG=1
     volumes:
       - ~/kicad-tools/data:/data
-      - ./api/:/usr/src/api/
+      - ./api:/usr/src/api
+      - ./etc/kibot:/opt/etc/kibot
     ports:
       - "5000:5000"

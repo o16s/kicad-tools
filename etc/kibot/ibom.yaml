@@ -1,0 +1,17 @@
+# Example KiPlot config file
+kibot:
+  version: 1
+
+preflight:
+  run_erc: false
+  update_xml: false
+  run_drc: false
+  ignore_unconnected: true
+
+global:
+  output: 'ibom.%x'
+
+outputs:
+  - name: 'ibom'
+    comment: 'interactive bill of materials'
+    type: ibom
